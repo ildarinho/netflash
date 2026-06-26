@@ -5,7 +5,7 @@ categories: [Networking, SRv6]
 tags: [containerlab, frr, srv6, l3vpn]
 read_time: false
 ---
-Welcome to the first post in the series about segment routing with IPv6 dataplane (SRv6). Post walks through how unicast connectivity between two IPv4 nodes works within an L3VPN/SRv6 using FRR. Files are available in my [git](https://github.com/ildarinho/netflash).
+Welcome to the first post in the series about segment routing with IPv6 dataplane (SRv6). Post walks through how unicast connectivity between two IPv4 nodes works within an L3VPN/SRv6 using FRR. Files are available in my [git](https://github.com/ildarinho/L3VPNv4-over-SRv6-BE-with-FRR).
 
 ### My setup:
 - AWS EC2 on debian 12 (bookworm) with Linux Kernel Version: `6.1.0-29-cloud-amd64`
