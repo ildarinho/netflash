@@ -80,8 +80,8 @@ Here is the logic of SID allocation in FRR before 10.x:
 3. isisd receives the response with chunk from Zebra
 4. isisd can allocate a SRv6 SID from chunk
 5. isisd allocates SRv6 SID and sends request to zebra
-6. Zebra add srv6 sid include function to rib
-7. isisd release an SRv6 locator chunk
+6. Zebra adds srv6 sid include function to rib
+7. isisd releases an SRv6 locator chunk
 8. zebra changes the owner to ‘system’ that other daemons can use SRv6 locator
 
 > Only one daemon can use a single locator at a time
@@ -91,12 +91,12 @@ Here is the logic of SID allocation in FRR before 10.x:
 ![sid-9x-1](/assets/img/posts/1.5.png){: width="600" }
 ![sid-9x-1](/assets/img/posts/1.6.png){: width="600" }
 ![sid-9x-1](/assets/img/posts/1.7.png){: width="600" }
-
+_Figure 3_
 In FRR starting with 10.x, Zebra acts as the central SRv6 SID Manager. This changes the chunk allocation logic and daemons can share the same locator.\
 Here is the logic of SID allocation in FRR starting with 10.x:
 1. isisd requests a locator from Zebra
 2. Zebra assigns a locator 
-3. isisd receives and store the locator 
+3. isisd receives and stores the locator 
 4. isisd sends a SID allocation request to Zebra with context: behavior, next-hop, interface
 5. Zebra allocates the SID internally: selects the function number, composes the IPv6 address
 6. Zebra sends an allocation notification back to isisd with the allocated SID address
@@ -104,6 +104,7 @@ Here is the logic of SID allocation in FRR starting with 10.x:
 8. Zebra installs the SRv6 SID into RIB\
 
 ![sid-10x-1](/assets/img/posts/1.8.png){: width="600" }
+_Figure 4_
 
 > For manual SRv6 SID allocation, Iproute2 is used.\
 [Example of manual End.X SID allocation:](https://github.com/FRRouting/frr/blob/master/staticd/static_srv6.c#L29)\
@@ -113,6 +114,7 @@ Here is the logic of SID allocation in FRR starting with 10.x:
 {: .prompt-info }
 And as an additional step, Zebra pushes the route entry with SID to the dataplane via Netlink.
 ![netlink-9x-1](/assets/img/posts/1.9.png){: width="400" }
+_Figure 5_
 
 following command in the cli help to check RIB  about SIDs are allocated on PE1:
 ```bash
@@ -133,11 +135,12 @@ and the result will be:\
 Once the PEs have allocated SIDs in their RIB, they can advertise SRv6 information into the IGP domain. IS-IS uses TLVs and sub-TLVs to advertise information.
 
 ![isis-tlv](/assets/img/posts/1.10.png){: width="400" }
+_Figure 6_
 
 ### BGP and L3VPN
 Figure 3 shows the topology related to BGP and L3VPN. The figure includes an example of the SA/DA encapsulation
 ![bgp-topology](/assets/img/posts/1.11.png)
-_Figure 1_
+_Figure 7_
 Example BGP and L3VPN configuration for PE1:
 ```bash
 router bgp 12 vrf vrf-ce
@@ -198,6 +201,7 @@ and the result will be:\
 
 As part of the control plane, PE1 sends PE2 a BGP update that includes a label = 16, the SID value = 2001:db8:100::, and the service data. This means PE2 does not receive the full SID 2001:db8:100:0:1::/128 directly. Instead, PE2 performs transposition to rebuild the full SID, then installs it in its RIB and FIB.  
 ![transposition](/assets/img/posts/1.12.png){: width="600" }
+_Figure 8_
 
 > Next-hop reachability on PEs devices is importan in FRR, which is why in `show bgp nexthop detail` indirect next hop need to be in valid status.
 {: .prompt-info }
