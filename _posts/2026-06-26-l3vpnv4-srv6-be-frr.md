@@ -74,7 +74,7 @@ segment-routing
     prefix 2001:db8:100::/64 "SRv6 SIDs are allocated within this prefix"
 ```
 In FRR before 10.x, the mechanism called “label chunk” dynamically allocates new SIDs by default using a single shared locator prefix for routing daemons. Communication between the daemon and Zebra is asynchronous and default SRv6 locator owner = ‘system’.\
-Here is the logic of SID allocation in FRR before 10.x:
+Here is the logic of SID allocation in FRR before 10.x (Figure 3):
 1. Zebra receives a call from isisd
 2. Zebra allocates a chunk from the locator and sets isisd as owner
 3. isisd receives the response with chunk from Zebra
@@ -93,7 +93,7 @@ Here is the logic of SID allocation in FRR before 10.x:
 ![sid-9x-1](/assets/img/posts/1.7.png){: width="600" }
 _Figure 3_
 In FRR starting with 10.x, Zebra acts as the central SRv6 SID Manager. This changes the chunk allocation logic and daemons can share the same locator.\
-Here is the logic of SID allocation in FRR starting with 10.x:
+Here is the logic of SID allocation in FRR starting with 10.x (Figure 4):
 1. isisd requests a locator from Zebra
 2. Zebra assigns a locator 
 3. isisd receives and stores the locator 
@@ -112,7 +112,7 @@ _Figure 4_
 {: .prompt-info }
 > In FRR, each major protocol is implemented in its own daemon, and these daemons communicate with a middleman daemon (Zebra), which is responsible for coordinating routing decisions and interacting with the Linux dataplane via Netlink.
 {: .prompt-info }
-And as an additional step, Zebra pushes the route entry with SID to the dataplane via Netlink.
+And as an additional step, Zebra pushes the route entry with SID to the dataplane via Netlink (Figure 5).
 ![netlink-9x-1](/assets/img/posts/1.9.png){: width="400" }
 _Figure 5_
 
@@ -132,13 +132,13 @@ and the result will be:\
 `2001:db8:100:: nhid 17  encap seg6local action End dev sr0 proto isis`\
 `2001:db8:100:0:2:: nhid 26  encap seg6local action End.X nh6 dev eth2 proto isis`
 
-Once the PEs have allocated SIDs in their RIB, they can advertise SRv6 information into the IGP domain. IS-IS uses TLVs and sub-TLVs to advertise information.
+Once the PEs have allocated SIDs in their RIB, they can advertise SRv6 information into the IGP domain. IS-IS uses TLVs and sub-TLVs to advertise information (Figure 6).
 
 ![isis-tlv](/assets/img/posts/1.10.png){: width="400" }
 _Figure 6_
 
 ### BGP and L3VPN
-Figure 3 shows the topology related to BGP and L3VPN. The figure includes an example of the SA/DA encapsulation
+Figure 7 shows the topology related to BGP and L3VPN. The figure includes an example of the SA/DA encapsulation
 ![bgp-topology](/assets/img/posts/1.11.png)
 _Figure 7_
 Example BGP and L3VPN configuration for PE1:
@@ -199,7 +199,7 @@ show  ipv6 route
 and the result will be:\
 `B>* 2001:db8:100:0:1::/128 [20/0] is directly connected, vrf-ce, seg6local End.DT4 table 10`
 
-As part of the control plane, PE1 sends PE2 a BGP update that includes a label = 16, the SID value = 2001:db8:100::, and the service data. This means PE2 does not receive the full SID 2001:db8:100:0:1::/128 directly. Instead, PE2 performs transposition to rebuild the full SID, then installs it in its RIB and FIB.  
+As part of the control plane, PE1 sends PE2 a BGP update that includes a label = 16, the SID value = 2001:db8:100::, and the service data. This means PE2 does not receive the full SID 2001:db8:100:0:1::/128 directly. Instead, PE2 performs transposition to rebuild the full SID, then installs it in its RIB and FIB (Figure 8).  
 ![transposition](/assets/img/posts/1.12.png){: width="600" }
 _Figure 8_
 
