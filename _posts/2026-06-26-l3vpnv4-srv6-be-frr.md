@@ -43,11 +43,11 @@ To deploy the full topology, run the following commands in the cli:
 clab deploy --topo l3vpnv4srv6be.yaml
 ./enable-ipv6-forw.sh
 ```
-To check communication between CE1 and CE2, run the following command in the cli:
+To verify the data plane operation between CE1 and CE2, run the following command in the cli:
 ```bash
 docker exec clab-frrsrv6-ce2 ping -I 2.2.2.2 1.1.1.1
 ```
-If the ping is successful, it means the connection between CE1 and CE2 is working and we can jump on to the details, starting with:
+If the ping is successful, it means the connection between CE1 and CE2 is working and we can jump into the details, starting with:
 ### IS-IS and SRv6
 Figure 2 shows the topology related to IS-IS and SRv6, where IS-IS is configured on PE1/P/PE2, and SRv6 is configured on PE1/PE2.
 
@@ -74,14 +74,15 @@ segment-routing
     prefix 2001:db8:100::/64 "SRv6 SIDs are allocated within this prefix"
 ```
 In FRR before 10.x, the mechanism called “label chunk” dynamically allocates new SIDs by default using a single shared locator prefix for routing daemons. Communication between the daemon and Zebra is asynchronous and default SRv6 locator owner = ‘system’
+Here is the logic of SID allocation in FRR before 10.x:
 1. Zebra receives a call from isisd
 2. Zebra allocates a chunk from the locator and sets isisd as owner
 3. isisd receives the response with chunk from Zebra
-4. isisd can allocates a SRv6 SID from chunk
-5. isisd allocates SRv6 SID and sent request to zebra
+4. isisd can allocate a SRv6 SID from chunk
+5. isisd allocates SRv6 SID and sends request to zebra
 6. Zebra add srv6 sid include function to rib
 7. isisd release an SRv6 locator chunk
-8. zebra change owner on ‘system’ that other daemons can use SRv6 locator
+8. zebra changes the owner to ‘system’ that other daemons can use SRv6 locator
 
 > Only one daemon can use a single locator at a time
 {: .prompt-info }
@@ -91,7 +92,8 @@ In FRR before 10.x, the mechanism called “label chunk” dynamically allocates
 ![sid-9x-1](/assets/img/posts/1.6.png){: width="600" }
 ![sid-9x-1](/assets/img/posts/1.7.png){: width="600" }
 
-In FRR starting with 10.x, Zebra acts as the central SRv6 SID Manager. This changes the chunk allocation logic and daemons can share the same locator:
+In FRR starting with 10.x, Zebra acts as the central SRv6 SID Manager. This changes the chunk allocation logic and daemons can share the same locator.
+Here is the logic of SID allocation in FRR starting with 10.x:
 1. isisd requests a locator from Zebra
 2. Zebra assigns a locator 
 3. isisd receives and store the locator 
@@ -103,8 +105,8 @@ In FRR starting with 10.x, Zebra acts as the central SRv6 SID Manager. This chan
 
 ![sid-10x-1](/assets/img/posts/1.8.png){: width="600" }
 
-> Iproute2 is used for manual SRv6 SID allocation.\
-[Example of End.X SID allocation:](https://github.com/FRRouting/frr/blob/master/staticd/static_srv6.c#L29)\
+> For manual SRv6 SID allocation, Iproute2 is used .\
+[Example of manual End.X SID allocation:](https://github.com/FRRouting/frr/blob/master/staticd/static_srv6.c#L29)\
 `ip -6 route add <ipv6 prefix> encap seg6local action End.X nh6 <next hop> dev <intf>`
 {: .prompt-info }
 > In FRR, each major protocol is implemented in its own daemon, and these daemons communicate with a middleman daemon (Zebra), which is responsible for coordinating routing decisions and interacting with the Linux dataplane via Netlink.
@@ -117,13 +119,13 @@ following command in the cli help to check RIB  about SIDs are allocated on PE1:
 docker exec -it  clab-frrsrv6-pe1 vtysh
 show  ipv6 route
 ```
-and the result will be\
+and the result will be:\
 `I>* 2001:db8:100:0:2::/128 [115/0] is directly connected, eth2, seg6local End.X nh6`\
 following command in the cli help to check FIB  about SIDs are allocated on PE1:
 ```bash
 docker exec -it clab-frrsrv6-pe1 bash ip -6 route show
 ```
-and the result will be\
+and the result will be:\
 `2001:db8:100:: nhid 17  encap seg6local action End dev sr0 proto isis`\
 `2001:db8:100:0:2:: nhid 26  encap seg6local action End.X nh6 dev eth2 proto isis`
 
@@ -146,7 +148,7 @@ router bgp 12 vrf vrf-ce
  neighbor 10.1.1.0 peer-group ce-peer
  !
  address-family ipv4 unicast
-  neighbor ce-peer activate < enable an address family
+  neighbor ce-peer activate "enable an address family"
   neighbor ce-peer route-map inbound-bgp-map in
   neighbor ce-peer route-map outbound-bgp-map out
   sid vpn export auto "SID value is automatically assigned"
@@ -190,13 +192,13 @@ bgpd allocates the End.DT4 SID in a similar way to isisd, following command in t
 docker exec -it  clab-frrsrv6-pe1 vtysh
 show  ipv6 route
 ```
-and the result will be\
+and the result will be:\
 `B>* 2001:db8:100:0:1::/128 [20/0] is directly connected, vrf-ce, seg6local End.DT4 table 10`
 
-PE2 does not receive the full SID 2001:db8:100:0:1::/128 in bgp update from PE1. Instead, PE1 sends label = 16, sid value = 2001:db8:100:: and service data. PE2 uses this info to start the process called transposition.  
+As part of the control plane, PE1 sends PE2 a BGP update that includes a label = 16, the SID value = 2001:db8:100::, and the service data. This means PE2 does not receive the full SID 2001:db8:100:0:1::/128 directly. Instead, PE2 performs transposition to rebuild the full SID, then installs it in its RIB and FIB.  
 ![transposition](/assets/img/posts/1.12.png){: width="600" }
 
-> Next-hop reachability on PEs devices is importan in FRR, which is why in `show bgp nexthop detail` <indirect next hop> need to be valid.
+> Next-hop reachability on PEs devices is importan in FRR, which is why in `show bgp nexthop detail` indirect next hop need to be valid.
 {: .prompt-info }
 
 Finally, these two commands help verify that 2.2.2.2 is installed in the PE1 VRF.
@@ -204,6 +206,6 @@ Finally, these two commands help verify that 2.2.2.2 is installed in the PE1 VRF
 docker exec -it clab-frrsrv6-pe1 vtysh 
 show ip route vrf vrf-ce 
 ```
-and the result will be\
+and the result will be:\
 `B>  2.2.2.2/32 [200/0] via be::2 (vrf default) (recursive), label 16, seg6 2001:db8:200:0:1::, weight 1, 00:01:02`\
 `*.       via fe80::a8c1:abff:fe3c:ca90, eth2 (vrf default), label 16, seg6 2001:db8:200:0:1::, weight 1, 00:01:02`
