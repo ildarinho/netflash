@@ -4,6 +4,7 @@ date: 2026-06-26 12:00:00 +0900
 categories: [Networking, SRv6]
 tags: [containerlab, frr, srv6, l3vpn]
 read_time: false
+media_subpath: /assets/img/posts/
 ---
 Welcome to the first post in the series about segment routing with IPv6 dataplane (SRv6). Post walks through how unicast connectivity between two IPv4 nodes works within an L3VPN/SRv6 using FRR. Files are available in my [git](https://github.com/ildarinho/L3VPNv4-over-SRv6-BE-with-FRR).
 
