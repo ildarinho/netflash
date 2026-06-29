@@ -73,7 +73,7 @@ segment-routing
    locator locator-name
     prefix 2001:db8:100::/64 "SRv6 SIDs are allocated within this prefix"
 ```
-In FRR before 10.x, the mechanism called “label chunk” dynamically allocates new SIDs by default using a single shared locator prefix for routing daemons. Communication between the daemon and Zebra is asynchronous and default SRv6 locator owner = ‘system’
+In FRR before 10.x, the mechanism called “label chunk” dynamically allocates new SIDs by default using a single shared locator prefix for routing daemons. Communication between the daemon and Zebra is asynchronous and default SRv6 locator owner = ‘system’.\
 Here is the logic of SID allocation in FRR before 10.x:
 1. Zebra receives a call from isisd
 2. Zebra allocates a chunk from the locator and sets isisd as owner
@@ -92,7 +92,7 @@ Here is the logic of SID allocation in FRR before 10.x:
 ![sid-9x-1](/assets/img/posts/1.6.png){: width="600" }
 ![sid-9x-1](/assets/img/posts/1.7.png){: width="600" }
 
-In FRR starting with 10.x, Zebra acts as the central SRv6 SID Manager. This changes the chunk allocation logic and daemons can share the same locator.
+In FRR starting with 10.x, Zebra acts as the central SRv6 SID Manager. This changes the chunk allocation logic and daemons can share the same locator.\
 Here is the logic of SID allocation in FRR starting with 10.x:
 1. isisd requests a locator from Zebra
 2. Zebra assigns a locator 
@@ -105,7 +105,7 @@ Here is the logic of SID allocation in FRR starting with 10.x:
 
 ![sid-10x-1](/assets/img/posts/1.8.png){: width="600" }
 
-> For manual SRv6 SID allocation, Iproute2 is used .\
+> For manual SRv6 SID allocation, Iproute2 is used.\
 [Example of manual End.X SID allocation:](https://github.com/FRRouting/frr/blob/master/staticd/static_srv6.c#L29)\
 `ip -6 route add <ipv6 prefix> encap seg6local action End.X nh6 <next hop> dev <intf>`
 {: .prompt-info }
@@ -121,6 +121,7 @@ show  ipv6 route
 ```
 and the result will be:\
 `I>* 2001:db8:100:0:2::/128 [115/0] is directly connected, eth2, seg6local End.X nh6`\
+
 following command in the cli help to check FIB  about SIDs are allocated on PE1:
 ```bash
 docker exec -it clab-frrsrv6-pe1 bash ip -6 route show
@@ -198,7 +199,7 @@ and the result will be:\
 As part of the control plane, PE1 sends PE2 a BGP update that includes a label = 16, the SID value = 2001:db8:100::, and the service data. This means PE2 does not receive the full SID 2001:db8:100:0:1::/128 directly. Instead, PE2 performs transposition to rebuild the full SID, then installs it in its RIB and FIB.  
 ![transposition](/assets/img/posts/1.12.png){: width="600" }
 
-> Next-hop reachability on PEs devices is importan in FRR, which is why in `show bgp nexthop detail` indirect next hop need to be valid.
+> Next-hop reachability on PEs devices is importan in FRR, which is why in `show bgp nexthop detail` indirect next hop need to be in valid status.
 {: .prompt-info }
 
 Finally, these two commands help verify that 2.2.2.2 is installed in the PE1 VRF.
