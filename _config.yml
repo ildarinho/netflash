@@ -161,7 +161,7 @@ pwa:
 paginate: 10
 
 # The base URL of your site
-baseurl: "netflash"
+baseurl: "/netflash"
 
 # ------------ The following options are not recommended to be modified ------------------
 
