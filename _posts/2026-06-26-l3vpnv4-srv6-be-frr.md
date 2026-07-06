@@ -5,7 +5,7 @@ categories: [Networking, SRv6]
 tags: [containerlab, frr, srv6, l3vpn]
 read_time: false
 ---
-Welcome to the first post in the series about segment routing with IPv6 dataplane (SRv6). Post walks through how unicast connectivity between two IPv4 nodes works within an L3VPN/SRv6 using FRR. Files are available in my [git](https://github.com/ildarinho/L3VPNv4-over-SRv6-BE-with-FRR).
+Welcome to the first post in the series about segment routing with IPv6 dataplane (SRv6). Post walks through how unicast connectivity between two IPv4 nodes works within an L3VPN/SRv6 using FRR. Files are available in my [git](https://github.com/ildarinho/netflash_files/tree/main/L3VPNv4-over-SRv6-BE-with-FRR).
 
 ### My setup:
 - AWS EC2 on debian 12 (bookworm) with Linux Kernel Version: `6.1.0-29-cloud-amd64`
@@ -101,7 +101,7 @@ Here is the logic of SID allocation in FRR starting with 10.x (Figure 4):
 5. Zebra allocates the SID internally: selects the function number, composes the IPv6 address
 6. Zebra sends an allocation notification back to isisd with the allocated SID address
 7. isisd sends a route install request to Zebra
-8. Zebra installs the SRv6 SID into RIB\
+8. Zebra installs the SRv6 SID into RIB
 
 ![sid-10x-1](/assets/img/posts/1.8.png){: width="600" }
 _Figure 4_
