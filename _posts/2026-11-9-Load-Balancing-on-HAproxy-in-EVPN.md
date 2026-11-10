@@ -7,12 +7,10 @@ read_time: false
 ---
 Load balancers are one part of a data center, used to distribute traffic for application purposes. The EVPN/VXLAN fabric is one of several options for the DC core, and it can be built in different ways depending on where VXLAN terminates. This post used the architecture where VXLAN terminates on the leaf, and Figure 1 and 2 shows the lab topology. The goal is for Peter to reach MJ and Ned through Manhattan. Files are available in my [git](https://github.com/ildarinho/netflash_files/tree/main/Load-Balancing-on-HAproxy-in-EVPN).
 
-
 >The lab was built in EVE-NG using vMX running Junos 23.2R2, which supports MAC-VRF (introduced in 20.4R1). The lab is IPv4 only. If you don't have the opportunity to set it up, all configs, show command output, and packet captures are available in my git.
 {: .prompt-info }
 
 ### Topology overview:
-
 
 ![Topology](/assets/img/posts/2.1.png)
 _Figure 1_
@@ -80,12 +78,16 @@ script here
 
 ```
 
-### Test
+### Test LB
 The full flow is here:
 ![Test](/assets/img/posts/2.4.png)
 _Figure 4_
 
-Here is what we see in the HAproxy stats:
+Peter initiates a TCP connection with 52.0.0.52 and keeps it open for the purpose of sending HTTP requests and receiving responses.
+Manhattan, running HAproxy, receives the HTTP request from Peter and writes it into the request buffer. Then HAproxy round-robin algorithm selects between MJ and Ned.
+Manhattan establishes a TCP connection from 10.3.31.1 to Ned and sends the request from the request buffer. Ned response is received into the stream response buffer and then sent back to Peter over the original frontend connection.
+
+Here is how the HAproxy stats look:
 ![Test](/assets/img/posts/2.5.png)
 _Figure 5_
 
