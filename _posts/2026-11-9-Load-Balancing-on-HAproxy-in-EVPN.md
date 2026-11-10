@@ -62,20 +62,101 @@ Manhattan is an Ubuntu server running FRR and HAproxy daemons
 
 FRR conf:
 ```bash
-conf here
+frr version 10.6.1
+frr defaults traditional
+hostname loadbalncer
+log syslog informational
+no ip forwarding
+no ipv6 forwarding
+service integrated-vtysh-config
+!
+ip prefix-list lo-lb seq 31 permit 10.3.31.1/32
+ip prefix-list new-52 seq 52 permit 52.0.0.0/24
+!
+route-map ALLOW-IN permit 10
+exit
+!
+route-map default-in permit 10
+exit
+!
+route-map prefix-announce permit 10
+ match ip address prefix-list new-52
+exit
+!
+route-map prefix-announce deny 100
+exit
+!
+route-map prefix-default permit 5
+ match ip address prefix-list lo-lb
+exit
+!
+route-map prefix-default deny 10
+exit
+!
+ip route 52.0.0.0/24 Null0
+!
+router bgp 65031
+ bgp router-id 52.0.0.1
+ no bgp enforce-first-as
+ no bgp hard-administrative-reset
+ no bgp graceful-restart notification
+ bgp bestpath as-path multipath-relax
+ neighbor 1.0.0.1 remote-as 1
+ neighbor 1.0.0.1 local-as 52 no-prepend replace-as
+ neighbor 10.3.5.0 remote-as 64605
+ neighbor 10.3.6.0 remote-as 64606
+ !
+ address-family ipv4 unicast
+  network 10.3.31.1/32
+  network 52.0.0.0/24
+  neighbor 1.0.0.1 route-map ALLOW-IN in
+  neighbor 1.0.0.1 route-map prefix-announce out
+  neighbor 10.3.5.0 route-map default-in in
+  neighbor 10.3.5.0 route-map prefix-default out
+  neighbor 10.3.6.0 route-map default-in in
+  neighbor 10.3.6.0 route-map prefix-default out
+ exit-address-family
+exit
 ```
-
-HAproxy conf
+HAproxy conf:
 ```bash
-conf here
+frontend web
+        bind 52.0.0.52:80
+        default_backend pool
+
+backend pool
+        balance roundrobin
+        option httpchk GET /
+        source 10.3.31.1
+	server web1 172.16.100.10:80 check
+        server web2 172.16.200.20:80 check
+
+frontend stats
+        bind 52.0.0.52:8404
+        stats enable
+        stats uri /stats
+        stats refresh 5s
 ```
-> HAproxy work in mode with
+> HAproxy work in http mode
 
-A small python script is used on the MJ and Ned servers.
-Small python script:
+Deploy MJ and Ned as systemd web services that return the server name on HTTP request
+
 ```bash
-script here
+echo "<h1>Server1</h1>" > /home/www/index.html
 
+tee /etc/systemd/system/webtest.service >/dev/null <<'EOF'
+[Unit]
+Description=Lab test backend (static banner on :80)
+After=network.target
+
+[Service]
+WorkingDirectory=/home/www
+ExecStart=/usr/bin/python3 -m http.server 80
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
 ```
 
 ### Test LB
