@@ -21,8 +21,6 @@ Manhattan has connections to border leaf1, leaf 2 and ISP router via eBGP. Load 
 
 Peter is a Ubuntu 22.04 desktop client connected to an ISP called Marvel within AS1. MJ and Ned are two Ubuntu 22.04 servers, each running a web server that returns info, which server responds. MJ is multihomed to Leaf1 and Leaf2 through an aggregated Ethernet interface, while Ned is connected to Leaf2.
 
-> To make bond work in 
-
 ![Topology](/assets/img/posts/2.3.png)
 _Figure 3_
 NY DC uses an ERB overlay design with symmetric IRB and a routed overlay with Type-5 routing, where the MAC-VRF is configured with the VLAN-aware service type. EVPN Type-2 MAC and MAC+IP handles intra reachability within a VLAN, and EVPN Type-5 handles inter reachability across IRB interfaces related to the VLAN. Leaf1 has an IRB interfaces related to VLAN 100 and Leaf2 has a both IRB interfaces related to VLAN 100 and VLAN 200. Bleaf1 and Bleaf2 as Leaf2 have both IRB interfaces, and also have an interface ge-0/0/1 connected to the LB and assigned to the tenant-1 VRF.
